@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 thinkers | Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
+    <style>
+        :root {
+    --bg-color: #0a0a0a;
+    --card-bg: #141414;
+    --accent-red: #e62222;
+    --text-gray: #888;
+    --input-bg: #1f1f1f;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: var(--bg-color);
+    color: white;
+    height: 100vh;
+    display: flex;
+    flex-direction: column; /* Stacks content and footer */
+    justify-content: space-between; 
+    align-items: center;
+    overflow: hidden;
+}
+
+/* Background Effect */
+.background-particles {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: -1;
+}
+
+.particle {
+    position: absolute;
+    background: rgba(230, 34, 34, 0.4);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+/* Main Login Area */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.main-title {
+    font-size: 3.5rem;
+    color: var(--accent-red);
+    text-shadow: 0 0 15px rgba(230, 34, 34, 0.6);
+    margin: 0;
+}
+
+.title-divider {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+}
+.title-divider span { width: 40px; height: 1px; background: var(--accent-red); }
+.title-divider .dot { width: 4px; height: 4px; background: var(--accent-red); border-radius: 50%; margin: 0 10px; }
+
+.login-card {
+    background: var(--card-bg);
+    padding: 40px;
+    border-radius: 4px;
+    width: 350px;
+    border: 1px solid rgba(230, 34, 34, 0.2);
+    position: relative;
+}
+
+/* Red corners on the card */
+.login-card::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: -1px; width: 15px; height: 15px;
+    border-top: 2px solid var(--accent-red);
+    border-left: 2px solid var(--accent-red);
+}
+
+h2 { text-align: center; font-size: 1.2rem; margin-bottom: 25px; }
+h2 span { color: var(--accent-red); }
+
+/* Form Elements */
+.input-group { margin-bottom: 15px; }
+label { font-size: 0.7rem; color: var(--text-gray); display: block; margin-bottom: 5px; }
+
+.input-wrapper {
+    background: var(--input-bg);
+    border: 1px solid #333;
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-radius: 4px;
+}
+.input-wrapper input {
+    background: transparent; border: none; color: white; width: 100%; outline: none; padding-left: 10px;
+}
+.input-wrapper i { color: #555; }
+
+.btn-signup {
+    width: 100%;
+    background: var(--accent-red);
+    color: white;
+    border: none;
+    padding: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 15px;
+    transition: 0.3s;
+}
+.btn-signup:hover { background: #b31b1b; }
+
+.footer-links { text-align: center; color: var(--text-gray); font-size: 0.8rem; }
+.or-divider { margin: 15px 0; }
+.footer-links a { color: var(--accent-red); text-decoration: none; }
+
+/* Team Footer Section at Bottom */
+.team-footer {
+    width: 100%;
+    max-width: 500px;
+    text-align: center;
+    padding-bottom: 30px;
+}
+
+.team-tagline {
+    color: var(--accent-red);
+    font-size: 1.2rem;
+    margin: 10px 0;
+    letter-spacing: 1px;
+}
+
+.team-desc {
+    color: #666;
+    font-size: 0.85rem;
+    margin-bottom: 15px;
+}
+
+/* Footer Decor */
+.decor-line { display: flex; align-items: center; justify-content: center; gap: 15px; }
+.gradient-line {
+    height: 1px; width: 80px;
+    background: linear-gradient(to right, transparent, var(--accent-red), transparent);
+}
+.dots-row { display: flex; gap: 4px; }
+.tiny-dot { width: 4px; height: 4px; background: var(--accent-red); border-radius: 50%; }
+.diamond-icon {
+    width: 8px; height: 8px; border: 1px solid var(--accent-red); transform: rotate(45deg);
+}
+        .stranger-modal {
+            display: none; 
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9); 
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: #111;
+            border: 2px solid #ff0000;
+            box-shadow: 0 0 20px #ff0000, inset 0 0 20px #ff0000;
+            padding: 40px;
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+            border-radius: 8px;
+            position: relative;
+            animation: flicker 2s infinite alternate;
+        }
+
+        .modal-title {
+            color: #ff0000;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 24px;
+            font-weight: bold;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px #ff0000;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+
+        .modal-text {
+            color: #ccc;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 16px;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        .modal-btn {
+            background-color: transparent;
+            color: #ff0000;
+            border: 1px solid #ff0000;
+            padding: 10px 30px;
+            font-size: 18px;
+            font-family: 'Courier New', Courier, monospace;
+            cursor: pointer;
+            transition: 0.3s;
+            text-transform: uppercase;
+            box-shadow: 0 0 5px #ff0000;
+        }
+
+        .modal-btn:hover {
+            background-color: #ff0000;
+            color: #000;
+            box-shadow: 0 0 25px #ff0000;
+        }
+
+
+        @keyframes flicker {
+            0% { box-shadow: 0 0 20px #a70000, inset 0 0 20px #a70000; }
+            50% { box-shadow: 0 0 15px #ff0000, inset 0 0 10px #ff0000; }
+            100% { box-shadow: 0 0 25px #ff0000, inset 0 0 25px #ff0000; }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-particles" id="particles"></div>
+
+    <div class="main-content">
+        <h1 class="main-title">404 thinkers</h1>
+        <div class="title-divider"><span></span><i class="dot"></i><span></span></div>
+
+        <div class="login-card">
+            <h2>Enter The <span>Upside Down</span></h2>
+            
+            <form id="loginForm" action="newwise.html" onsubmit="openStrangerModal(event)">
+                <div class="input-group">
+                    <label>EMAIL</label>
+                    <div class="input-wrapper">
+                        <i class="fa-regular fa-envelope"></i>
+                        <input type="email" name="email" placeholder="hawkins@lab.gov" autocomplete="username" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>PASSWORD</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="password" name="password" placeholder="••••••••" autocomplete="new-password" required>
+                        <i class="fa-regular fa-eye toggle-password" onclick="togglePass()"></i>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-signup">SIGN UP</button>
+            </form>
+
+            <div id="g_id_onload"
+                 data-client_id="1019288177944-1ue7qs82v7c0fd8vebaprvghl95oj4qo.apps.googleusercontent.com"
+                 data-callback="handleCredentialResponse"
+                 data-auto_prompt="false">
+            </div>
+
+            <div class="g_id_signin"
+                 data-type="standard"
+                 data-size="large"
+                 data-theme="filled_black"
+                 data-text="signup_with"
+                 data-shape="rectangular"
+                 data-logo_alignment="left"
+                 style="margin-top: 15px; width: 100%;">
+            </div>
+
+            <div class="footer-links">
+                <div class="or-divider">OR</div>
+                <p>Already have an account? <a href="newwise.html">Log In</a></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="strangerModal" class="stranger-modal">
+        <div class="modal-content">
+            <div class="modal-title">Hawkins Lab Alert</div>
+            <p class="modal-text">
+                The gate is opening...<br>
+                Should the Mind Flayer <strong>remember your password</strong> for the next crossover?
+            </p>
+            <button class="modal-btn" onclick="submitRealForm()">FRIENDS DON'T LIE (OK)</button>
+        </div>
+    </div>
+
+    <footer class="team-footer">
+        <div class="decor-line top">
+            <span class="gradient-line"></span>
+            <div class="dots-row">
+                <span class="tiny-dot"></span>
+                <span class="tiny-dot"></span>
+                <span class="tiny-dot"></span>
+            </div>
+            <span class="gradient-line"></span>
+        </div>
+
+        <h3 class="team-tagline">Think. Build. Optimize.</h3>
+        <p class="team-desc">
+            A team that values clarity, efficiency, and innovation — turning ideas into reliable technology.
+        </p>
+
+        <div class="decor-line bottom">
+            <span class="gradient-line"></span>
+            <i class="diamond-icon"></i>
+            <span class="gradient-line"></span>
+        </div>
+    </footer>
+
+    <script>// Function to show/hide password
+function togglePass() {
+    const passwordField = document.getElementById('password');
+    const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+    passwordField.setAttribute('type', type);
+}
+
+// Background Particle Animation
+const container = document.getElementById('particles');
+
+function createParticle() {
+    const particle = document.createElement('div');
+    particle.classList.add('particle');
+    
+    // Randomize appearance
+    const size = Math.random() * 3 + 'px';
+    particle.style.width = size;
+    particle.style.height = size;
+    particle.style.left = Math.random() * 100 + 'vw';
+    particle.style.top = Math.random() * 100 + 'vh';
+    
+    container.appendChild(particle);
+
+    // Random drift movement
+    const duration = Math.random() * 8000 + 5000;
+    const animation = particle.animate([
+        { transform: 'translate(0, 0)', opacity: 0.6 },
+        { transform: `translate(${Math.random() * 100 - 50}px, -100px)`, opacity: 0 }
+    ], {
+        duration: duration,
+        easing: 'linear'
+    });
+
+    animation.onfinish = () => particle.remove();
+}
+
+// Generate a new particle every 400ms
+setInterval(createParticle, 400);</script>
+    
+    <script>
+  
+        function openStrangerModal(event) {
+            event.preventDefault(); 
+            document.getElementById('strangerModal').style.display = 'flex'; 
+        }
+
+      
+        function submitRealForm() {
+            
+            document.getElementById('strangerModal').style.display = 'none';
+           
+            document.getElementById('loginForm').submit();
+        }
+
+       
+        function handleCredentialResponse(response) {
+            const responsePayload = decodeJwtResponse(response.credential);
+            console.log("Full Name: " + responsePayload.name);
+            window.location.href = "newwise.html";
+        }
+
+        function decodeJwtResponse(token) {
+            var base64Url = token.split('.')[1];
+            var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+        }
+    </script>
+</body>
+</html>
