@@ -207,8 +207,9 @@
             particle.addEventListener('animationend', () => { particle.remove(); });
         }
 
-        setInterval(createParticle, 100);
-        for(let i=0; i<20; i++) { createParticle(); }
+        // --- INCREASED PARTICLE QUANTITY ---
+        setInterval(createParticle, 50); // Faster creation (was 100)
+        for(let i=0; i<60; i++) { createParticle(); } // More initial dots (was 20)
 
 
         // --- TREE GENERATION LOGIC ---
@@ -244,11 +245,11 @@
             const root = {
                 x: canvas.width / 2,
                 y: canvas.height,
-                // On mobile: Make trunk shorter (25% height) to fit screen. Desktop: 33%
-                len: isMobile ? canvas.height * 0.25 : canvas.height * 0.33, 
+                // On mobile: Make trunk shorter (20% height) to fit screen. Desktop: 33%
+                len: isMobile ? canvas.height * 0.20 : canvas.height * 0.33, 
                 angle: 0, 
                 // On mobile: Thinner trunk
-                width: isMobile ? 25 : 40,
+                width: isMobile ? 20 : 40,
                 depth: 0,
                 id: 'root'
             };
@@ -322,7 +323,7 @@
                 if (progress < 1) { requestAnimationFrame(drawStep); } 
                 else {
                     if (b.depth < 3) {
-                         animateGhostBranch({
+                          animateGhostBranch({
                             x: endX, y: endY, len: b.len * 0.5, 
                             angle: b.angle + (Math.random() > 0.5 ? 45 : -45), 
                             width: b.width * 0.4, depth: b.depth + 1
@@ -347,8 +348,7 @@
                         });
                     } 
                     else if (b.depth === 1) {
-                        // Second Split: Adjusted Angles based on spreadAngle logic
-                        // Note: We use relative adjustments (spreadAngle/2 approx) to keep it proportional
+                        // Second Split: Adjusted Angles
                         const subSpread = spreadAngle * 0.6; 
                         
                         if (b.side === 'left') {
@@ -362,17 +362,26 @@
                             }, null);
                         } 
                         else if (b.side === 'right') {
-                            animateFixedBranch({
-                                x: endX, y: endY, len: b.len * 1.0, 
-                                angle: b.angle - subSpread, width: b.width * 0.6, depth: 2, item: payload[0] 
-                            }, null);
+                            // --- FIX APPLIED HERE: QUIZ MOVED TO PINK SPOT ---
+                            
+                            // 1. QUIZ: Sharp Left (Inner side), Medium Length
+                            // This hits the "pink mark" area
                             animateFixedBranch({
                                 x: endX, y: endY, len: b.len * 0.85,
-                                angle: b.angle + (subSpread * 0.5), width: b.width * 0.6, depth: 2, item: payload[1] 
+                                angle: b.angle - (subSpread * 1.5), width: b.width * 0.6, depth: 2, item: payload[1] 
                             }, null);
+                            
+                            // 2. DISCUSSION: Right side, Higher up
                             animateFixedBranch({
-                                x: endX, y: endY, len: b.len * 0.75,
-                                angle: b.angle + (subSpread * 1.5), width: b.width * 0.6, depth: 2, item: payload[2] 
+                                x: endX, y: endY, len: b.len * 1.0, 
+                                angle: b.angle + (subSpread * 0.5), width: b.width * 0.6, depth: 2, item: payload[0] 
+                            }, null);
+                            
+                            // 3. HELP: Center-Left, Short Length (Low Down)
+                            // "Downside" relative to the general cluster
+                            animateFixedBranch({
+                                x: endX, y: endY, len: b.len * 0.55,
+                                angle: b.angle - (subSpread * 0.3), width: b.width * 0.6, depth: 2, item: payload[2] 
                             }, null);
                         }
                     }
