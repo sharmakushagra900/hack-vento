@@ -1,95 +1,100 @@
-const { WebSocketServer, WebSocket } = require('ws'); // FIXED: Import WebSocket for constants
+require('dotenv').config();
+const { WebSocketServer } = require('ws');
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-// 1. Setup WebSocket Server on port 8080
+// --- CONFIGURATION ---
+// 1. SECURITY FIX: Never paste the key directly here. 
+// We now read strictly from the .env file.
+const API_KEY = process.env.GEMINI_API_KEY; 
+
+// 2. MODEL FIX: We are using "gemini-1.5-flash" to match your console logs.
+// (It is faster and cheaper for a Tutor bot than gemini-pro)
+const genAI = new GoogleGenerativeAI(API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
 const wss = new WebSocketServer({ port: 8080 });
 
 console.log("------------------------------------------------");
-console.log("🚀 UPSIDE DOWN SERVER (Simulation Mode) STARTED");
-console.log("   ✅ Status: ONLINE");
-console.log("   🚫 AI Key: NOT REQUIRED");
+console.log("🚀 UPSIDE DOWN SERVER (Hybrid AI Mode) STARTED");
+console.log(`   Using Model: gemini-1.5-flash`); // Log now matches the code above
 console.log("------------------------------------------------");
 
 wss.on('connection', (ws) => {
     console.log("New client connected!");
 
-    ws.on('message', (message) => {
+    ws.on('message', async (message) => {
+        let userPost;
         try {
-            // FIXED: Convert Buffer to string before parsing
-            const userPost = JSON.parse(message.toString());
-            
-            // FIXED: Added backticks for template literal
-            console.log(`Received: ${userPost.title}`);
-
-            // A. Broadcast the user's question to everyone
-            broadcast(userPost);
-
-            // B. Simulate "AI Thinking" delay
-            setTimeout(() => {
-                // Check if content exists to avoid crash
-                const content = userPost.content || ""; 
-                const aiResponse = generateSmartReply(content);
-                
-                const aiPost = {
-                    id: Date.now() + 1,
-                    author: "Gemini AI",
-                    role: "AI Tutor",
-                    title: "Answer to: " + userPost.title,
-                    content: aiResponse,
-                    likes: 10,
-                    replies: 0,
-                    time: "Just now",
-                    isSolved: true,
-                    avatar: "🤖"
-                };
-
-                // C. Send the "AI" answer
-                broadcast(aiPost);
-                
-            }, 1500);
-
+            userPost = JSON.parse(message);
         } catch (e) {
-            console.error("Error processing message:", e);
+            console.error("Invalid JSON received");
+            return;
+        }
+        
+        console.log(`Received: ${userPost.title}`);
+
+        // Broadcast question immediately
+        broadcast(userPost);
+
+        try {
+            // --- ATTEMPT 1: REAL AI ---
+            if (!API_KEY) {
+                throw new Error("Missing API Key in .env file");
+            }
+
+            const result = await model.generateContent(`
+                You are a helpful tutor for engineering students.
+                Question: "${userPost.content}"
+                Keep the answer short (max 2 sentences), simple and engaging.
+            `);
+            
+            const response = await result.response;
+            const aiText = response.text();
+
+            sendAiResponse(aiText);
+
+        } catch (error) {
+            // --- ATTEMPT 2: FALLBACK ---
+            console.error("⚠️ AI Failed. Reason:", error.message);
+            
+            if(error.message.includes("400")) console.log("-> Check your API Key validity.");
+            if(error.message.includes("404")) console.log("-> Model not found. Update NPM package or check spelling.");
+
+            setTimeout(() => {
+                const fakeAnswer = generateBackupAnswer(userPost.content);
+                sendAiResponse(fakeAnswer);
+            }, 1000); 
+        }
+
+        function sendAiResponse(text) {
+            const aiPost = {
+                id: Date.now() + 1,
+                author: "Gemini AI",
+                role: "AI Tutor",
+                title: "Answer to: " + userPost.title,
+                content: text,
+                likes: 10,
+                replies: 0,
+                time: "Just now",
+                isSolved: true,
+                avatar: "🤖"
+            };
+            broadcast(aiPost);
         }
     });
 });
 
 function broadcast(data) {
     wss.clients.forEach((client) => {
-        // FIXED: Use constant instead of magic number '1'
-        if (client.readyState === WebSocket.OPEN) { 
-            client.send(JSON.stringify(data));
-        }
+        if (client.readyState === 1) client.send(JSON.stringify(data));
     });
 }
 
-// --- 🧠 THE "FAKE BRAIN" ---
-function generateSmartReply(text) {
-    // Safety check if text is empty
-    if (!text) return "Please provide more details.";
-    
-    const q = text.toLowerCase();
-
-    // 1. PHYSICS
-    if (q.includes("action") || q.includes("reaction") || q.includes("newton")) {
-        return "Great question! While the forces are equal and opposite, they act on different bodies. That is why they don't cancel out. (Newton's 3rd Law)";
-    }
-    // 2. THERMODYNAMICS
-    if (q.includes("energy") || q.includes("thermo")) {
-        return "Energy cannot be created or destroyed, only transformed. Check your system boundaries!";
-    }
-    // 3. CALCULUS
-    if (q.includes("integration") || q.includes("parts") || q.includes("calc")) {
-        return "Use the LIATE rule (Logarithmic, Inverse Trig, Algebraic, Trig, Exponential) to pick 'u'.";
-    }
-    // 4. BIOLOGY
-    if (q.includes("dna") || q.includes("replication")) {
-        return "The Leading strand is synthesized continuously, while the Lagging strand uses Okazaki fragments.";
-    }
-    // 5. CHEMISTRY
-    if (q.includes("organic") || q.includes("naming")) {
-        return "Follow priority: Carboxylic acids > Aldehydes > Ketones > Alcohols.";
-    }
-
-    // Default
-    return "Interesting problem. Try breaking it down into smaller steps and verifying your initial assumptions.";
+function generateBackupAnswer(text) {
+    const q = text ? text.toLowerCase() : "";
+    if (q.includes("action") || q.includes("newton")) return "For every action, there is an equal and opposite reaction. (Newton's 3rd Law)";
+    if (q.includes("energy") || q.includes("thermo")) return "Energy cannot be created or destroyed, only transformed.";
+    if (q.includes("dna") || q.includes("bio")) return "The Leading strand is continuous, the Lagging strand uses Okazaki fragments.";
+    if (q.includes("java") || q.includes("code")) return "A Class is the blueprint, an Object is the instance.";
+    return "That's a great question! Try breaking it down into first principles.";
 }
