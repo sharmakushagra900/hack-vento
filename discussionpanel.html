@@ -9,6 +9,47 @@
     <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     
     <style>
+        /* --- STRANGER THINGS CLICK ANIMATION STYLES --- */
+
+/* The glowing ripple circle */
+.st-ripple {
+    position: fixed; 
+    width: 20px; 
+    height: 20px; 
+    border-radius: 50%;
+    background: transparent; 
+    border: 2px solid rgba(255, 59, 59, 0.8);
+    box-shadow: 0 0 10px #ff3b3b, 0 0 20px #ff3b3b, inset 0 0 10px #ff3b3b;
+    transform: translate(-50%, -50%) scale(0); 
+    pointer-events: none; 
+    z-index: 9999;
+    animation: rippleEffect 0.6s ease-out forwards;
+}
+
+/* Ripple Animation Keyframes */
+@keyframes rippleEffect {
+    0% { transform: translate(-50%, -50%) scale(0); opacity: 1; border-width: 5px; }
+    100% { transform: translate(-50%, -50%) scale(4); opacity: 0; border-width: 0px; }
+}
+
+/* The floating white particles (spores) */
+.st-spore {
+    position: fixed; 
+    width: 4px; 
+    height: 4px; 
+    background-color: #e5e5e5; 
+    border-radius: 50%;
+    pointer-events: none; 
+    z-index: 9998; 
+    box-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
+    animation: sporeFloat 0.8s ease-out forwards;
+}
+
+/* Spore Floating Animation Keyframes */
+@keyframes sporeFloat {
+    0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0); opacity: 0; }
+}
         /* --- 1. THEME VARIABLES --- */
         :root {
             --bg-color: #050505;
@@ -453,6 +494,38 @@
 
     // Initialize
     renderFeed();
+    /* --- CLICK ANIMATION LOGIC --- */
+document.addEventListener('click', (e) => {
+    const x = e.clientX;
+    const y = e.clientY;
+
+    // 1. Create the Ripple Effect
+    const ripple = document.createElement('div'); 
+    ripple.className = 'st-ripple';
+    ripple.style.left = `${x}px`; 
+    ripple.style.top = `${y}px`;
+    document.body.appendChild(ripple);
+
+    // 2. Create the Floating Spores (8 particles)
+    for(let i = 0; i < 8; i++){
+        const spore = document.createElement('div'); 
+        spore.className = 'st-spore';
+        spore.style.left = `${x}px`; 
+        spore.style.top = `${y}px`;
+        
+        // Randomize direction for each spore
+        spore.style.setProperty('--dx', `${(Math.random() - 0.5) * 150}px`);
+        spore.style.setProperty('--dy', `${(Math.random() - 0.5) * 150}px`);
+        
+        document.body.appendChild(spore); 
+        
+        // Remove spore from DOM after animation finishes (800ms)
+        setTimeout(() => spore.remove(), 800);
+    }
+
+    // Remove ripple from DOM after animation finishes (600ms)
+    setTimeout(() => ripple.remove(), 600);
+});
 </script>
 
 </body>
